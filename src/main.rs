@@ -10,20 +10,23 @@ struct SubimageWithLocation {
 fn image_distance(og_img: &DynamicImage, x: u32, y: u32, target_img: &DynamicImage) -> f32 {
     //let (og_width, og_height) = og_img.dimensions();
     let (target_width, target_height) = target_img.dimensions();
+    let target_grayscale = target_img.grayscale();
+    let og_grayscale = og_img.grayscale();
 
     let mut sum_dist_square = 0.0;
 
-    for ty in 0..target_height{
-        for tx in 0..target_width{
-            for color_channel in 0..3 {
-                let target_pixel = target_img.get_pixel(tx, ty).0[color_channel] as f32;
-                let og_pixel = og_img.get_pixel(x + tx, y + ty).0[color_channel] as f32;
+    for ty in (0..target_height).step_by(2){
+        for tx in (0..target_width).step_by(2){
+            //for color_channel in 0..3 {
+                let target_pixel = target_grayscale.get_pixel(tx, ty).0[0] as f32;
+                let og_pixel = og_grayscale.get_pixel(x + tx, y + ty).0[0] as f32;
                 let dist = target_pixel - og_pixel;
-                sum_dist_square += dist * dist;
-            }
+                let dist_abs = dist.abs();
+                sum_dist_square += dist_abs * dist_abs;
+            //}
         }
     }
-    return (sum_dist_square / (target_width * target_height) as f32).sqrt();
+    return (sum_dist_square / ((target_width/2) as f32 * (target_height/2) as f32)).sqrt();
     // for ty in 0..target_height{
     //     for color_channel in 0..3 {
     //         let target_pixel = target_img.get_pixel(0, ty).0[color_channel] as f32;
@@ -115,19 +118,18 @@ fn main() {
 
     let mut subimages_with_location: Vec<SubimageWithLocation> = vec![];
     for image in subimages.unwrap() {
-        let subimage_loc = find_match(&og_image, &image, 70.0);
+        let subimage_loc = find_match(&og_image, &image, 20.0);
         match subimage_loc {
-            Some((x,y)) => subimages_with_location.push(SubimageWithLocation{
-                location: (x,y),
-                image: image.clone(),
-            }),
+            Some((x,y)) =>{ println!("*******FOUND SUBIMAGE**********");
+                subimages_with_location.push(SubimageWithLocation{ location: (x,y),image: image.clone(),})
+            },
             None => {
                 eprintln!("Error could not find location of subimage in image");
             }
         }
     }
 
-    let mut result_image = DynamicImage::new_rgba8(800, 800);
+    let mut result_image = DynamicImage::new_rgba8(500, 500);
     // Iterate over the subimages and place them in the result image
     for subimage in &subimages_with_location {
         let (subimage_x, subimage_y) = subimage.location;
