@@ -129,7 +129,7 @@ fn main() {
         }
     }
 
-    let mut result_image = DynamicImage::new_rgba8(500, 500);
+    let mut result_image = DynamicImage::new_rgba8(og_image.dimensions().0, og_image.dimensions().1);
     // Iterate over the subimages and place them in the result image
     for subimage in &subimages_with_location {
         let (subimage_x, subimage_y) = subimage.location;
